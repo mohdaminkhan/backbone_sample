@@ -1,5 +1,5 @@
 
-
+alert("base config file loaded")
 require(["utils","../scripts/backbone"], function(utils){
 
 
