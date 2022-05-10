@@ -1,83 +1,56 @@
 #!/usr/bin/env node
-
 import fs from 'fs'
-import  http from 'http'
-import path, { dirname } from 'path'
-
-const hostname = 'localhost';
-
-const port = 3030;
-
-
-
-const server = http.createServer( (req, res) => {
+import path,{dirname} from 'path'
+import http from 'http'
+import {doSomething} from './utils.js'
+import {Transform} from 'stream';
+import { setDefaultResultOrder } from 'dns';
 
 
 
-	console.log(req.url)
-	res.statusCode = 200;
-	console.log(`server running at http://${hostname}:${port}`)
-	
-
-	console.log("basename",req.url)			
-	if(req.url==="/"){
-	
-		fs.readFile('index.html', function(err,data){
-
-			if(err) {
-				res.writeHead(404);
-				res.write('Content you are looking for was not found')
-			}
-			else {
-				res.writeHead(200, 'text/html');
-				res.write(data)
-
-			}
-			res.end()
-		})
-
-	}
-	else {
-		let dir = path.dirname(req.url)
-		console.log("DIRNAME",dir)
-		let file;
-		if(dir==="scripts")  {file = "scripts/"+path.basename(req.url)}
-		if(dir==="src") {file = "src/"+path.basename(req.url)}
-		console.log("FILe", file,dir)
-
-		fs.readFile(file,function(err,data){
+const filedir = path.dirname(import.meta.url)
+const filepath = path.join(filedir,'test.txt')
 
 
-			if(err) {
-			console.log("this is my error",err.message)	
-			res.writeHead(200, {'Content-type':'text/javascript'})
-			res.write(`${file} not there`)
-			res.end()
-		 }
-		
-		else {
-			res.writeHead(200, {'Content-type':'text/javascript'})
-			res.write(data)
-			res.end()
-		}
 
-		})
-	}
-	
+
+console.log(filepath,process.platform)
+const transformStream = new Transform();
+
+
+transformStream._transform=(chunk,encoding,callback)=>{
+
+ console.log("chunk -->",chunk)
+// console.log(chunk.toString('hex')+"\n")
+transformStream.push(chunk)
+callback()
 
 }
-
-
-)
-
-server.listen(port, hostname)
+const server = http.createServer((req,res)=>{
 
 
 
 
+let stream = fs.createReadStream('server/users.json','utf-8')
 
 
+res.writeHead(200, {'Content-type':'application/json','Access-Control-Allow-Origin':'*'})
 
 
+stream.pipe(transformStream).pipe(res)
+
+stream.on('end',()=>{transformStream.destroy()})
+
+stream.destroy()
+
+})
 
 
+server.listen(3030, 'localhost', ()=>{
+
+console.log("server started....")
+	
+})
+// console.log("dirname", dirname(import.meta.url))
+
+// doSomething() 
